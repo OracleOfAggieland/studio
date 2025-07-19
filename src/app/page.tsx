@@ -1,35 +1,42 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
-import type { Habit, ProgressData } from '@/types';
+import type { Habit, ProgressData, HabitTrigger, UserIdentity, Reflection, EvidenceEntry, EnvironmentalDesign } from '@/types';
 import Header from '@/components/layout/header';
 import HabitGrid from '@/components/habits/habit-grid';
 import AddHabitDialog from '@/components/habits/add-habit-dialog';
 import MotivationModal from '@/components/habits/motivation-modal';
+import TriggerDialog from '@/components/habits/trigger-dialog';
+import IdentityDialog from '@/components/identity/identity-dialog';
+import ReflectionDialog from '@/components/habits/reflection-dialog';
+import EnvironmentWizard from '@/components/habits/environment-wizard';
+import IdentityDashboard from '@/components/identity/identity-dashboard';
 import ProgressDashboard from '@/components/progress/progress-dashboard';
 import { getMotivationMessageAction } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast"
+import { Button } from '@/components/ui/button';
+import { Target } from 'lucide-react';
 
 const initialHabits: Habit[] = [
   // The 7 Habits of Highly Effective People
-  { id: '1', name: 'Put First Things First', description: 'Prioritize and execute important tasks.', icon: 'ClipboardList', streak: 2, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true } },
-  { id: '2', name: 'Sharpen the Saw', description: 'Engage in self-renewal (physical, mental, emotional, spiritual).', icon: 'Sparkles', streak: 4, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true } },
-  { id: '3', name: 'Seek First to Understand', description: 'Practice empathetic listening before making yourself heard.', icon: 'Ear', streak: 0, completions: {} },
+  { id: '1', name: 'Put First Things First', description: 'Prioritize and execute important tasks.', icon: 'ClipboardList', streak: 2, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true }, currentDifficulty: 'medium' },
+  { id: '2', name: 'Sharpen the Saw', description: 'Engage in self-renewal (physical, mental, emotional, spiritual).', icon: 'Sparkles', streak: 4, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true }, currentDifficulty: 'easy' },
+  { id: '3', name: 'Seek First to Understand', description: 'Practice empathetic listening before making yourself heard.', icon: 'Ear', streak: 0, completions: {}, currentDifficulty: 'medium' },
 
   // Atomic Habits
-  { id: '4', name: 'Identity: A Small Win', description: 'Prove "who I want to become" with one small action.', icon: 'Award', streak: 7, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 5), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 6), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 7), 'yyyy-MM-dd')]: true } },
-  { id: '5', name: 'Make It Easy', description: 'Shrink a habit down to its tiniest, 2-minute version.', icon: 'Scaling', streak: 1, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true } },
+  { id: '4', name: 'Identity: A Small Win', description: 'Prove "who I want to become" with one small action.', icon: 'Award', streak: 7, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 5), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 6), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 7), 'yyyy-MM-dd')]: true }, currentDifficulty: 'tiny' },
+  { id: '5', name: 'Make It Easy', description: 'Shrink a habit down to its tiniest, 2-minute version.', icon: 'Scaling', streak: 1, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true }, currentDifficulty: 'tiny' },
 
   // How to Win Friends & Influence People
-  { id: '6', name: 'Use a Person\'s Name', description: 'Remember and use people\'s names in conversation.', icon: 'User', streak: 3, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true } },
-  { id: '7', name: 'Sincere Appreciation', description: 'Give honest praise to someone today.', icon: 'Heart', streak: 0, completions: {} },
-  { id: '8', name: 'Admit Faults Quickly', description: 'If you\'re wrong, admit it quickly and emphatically.', icon: 'CheckCircle', streak: 1, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true } },
+  { id: '6', name: 'Use a Person\'s Name', description: 'Remember and use people\'s names in conversation.', icon: 'User', streak: 3, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true }, currentDifficulty: 'easy', triggers: [{ id: 'tr1', type: 'environmental', value: 'meeting someone new', habitId: '6', successRate: 75, totalAttempts: 12, successfulAttempts: 9 }] },
+  { id: '7', name: 'Sincere Appreciation', description: 'Give honest praise to someone today.', icon: 'Heart', streak: 0, completions: {}, currentDifficulty: 'easy', triggers: [{ id: 'tr2', type: 'time', value: '09:00', habitId: '7', successRate: 60, totalAttempts: 10, successfulAttempts: 6 }] },
+  { id: '8', name: 'Admit Faults Quickly', description: 'If you\'re wrong, admit it quickly and emphatically.', icon: 'CheckCircle', streak: 1, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true }, currentDifficulty: 'medium' },
 
   // Never Split the Difference
-  { id: '9', name: 'Practice Mirroring', description: 'Repeat the last few words someone has said to build rapport.', icon: 'Copy', streak: 5, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 5), 'yyyy-MM-dd')]: true } },
-  { id: '10', name: 'Practice Labeling', description: 'Acknowledge emotions ("It seems like...") to defuse negativity.', icon: 'Tag', streak: 0, completions: {} },
+  { id: '9', name: 'Practice Mirroring', description: 'Repeat the last few words someone has said to build rapport.', icon: 'Copy', streak: 5, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 5), 'yyyy-MM-dd')]: true }, currentDifficulty: 'easy', stackedWithHabitId: '6' },
+  { id: '10', name: 'Practice Labeling', description: 'Acknowledge emotions ("It seems like...") to defuse negativity.', icon: 'Tag', streak: 0, completions: {}, currentDifficulty: 'medium' },
 ];
 
 function calculateStreakFromCompletions(completions: Record<string, boolean>) {
@@ -48,18 +55,88 @@ function calculateStreakFromCompletions(completions: Record<string, boolean>) {
   return streak;
 }
 
-
 export default function Home() {
   const [habits, setHabits] = useState<Habit[]>(initialHabits);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   const [motivation, setMotivation] = useState<{ title: string; message: string | null } | null>(null);
   const [isLoadingMotivation, setIsLoadingMotivation] = useState(false);
+  const [triggerDialogHabit, setTriggerDialogHabit] = useState<Habit | null>(null);
+  const [identityDialogOpen, setIdentityDialogOpen] = useState(false);
+  const [reflectionDialogHabit, setReflectionDialogHabit] = useState<Habit | null>(null);
+  const [environmentWizardHabit, setEnvironmentWizardHabit] = useState<Habit | null>(null);
+  const [userIdentity, setUserIdentity] = useState<UserIdentity | null>(null);
+  const [environmentalDesigns, setEnvironmentalDesigns] = useState<Record<string, EnvironmentalDesign>>({});
   const { toast } = useToast();
+
+  // Check for missed habits and update difficulty
+  useEffect(() => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+    
+    setHabits(prevHabits => 
+      prevHabits.map(habit => {
+        // Check if habit was missed yesterday
+        if (!habit.completions[yesterday] && !habit.completions[today]) {
+          const missedCount = (habit.missedCount || 0) + 1;
+          
+          // Auto-adjust difficulty after 2 misses
+          if (missedCount >= 2 && habit.currentDifficulty !== 'tiny') {
+            toast({
+              title: `${habit.name} adjusted to Tiny Mode`,
+              description: "We've made it easier to help you get back on track!",
+              duration: 5000,
+            });
+            
+            return {
+              ...habit,
+              missedCount,
+              currentDifficulty: 'tiny',
+              lastMissedDate: yesterday,
+            };
+          }
+          
+          return {
+            ...habit,
+            missedCount,
+            lastMissedDate: yesterday,
+          };
+        }
+        
+        // Reset missed count if completed
+        if (habit.completions[today]) {
+          return {
+            ...habit,
+            missedCount: 0,
+          };
+        }
+        
+        return habit;
+      })
+    );
+  }, [toast]);
 
   const sortedHabits = useMemo(() => {
     return [...habits].sort((a, b) => {
       const aCompleted = a.completions[format(new Date(), 'yyyy-MM-dd')] || false;
       const bCompleted = b.completions[format(new Date(), 'yyyy-MM-dd')] || false;
+      
+      // Stacked habits come first if their prerequisite is complete
+      if (a.stackedWithHabitId && b.stackedWithHabitId) {
+        return 0;
+      }
+      if (a.stackedWithHabitId) {
+        const prereq = habits.find(h => h.id === a.stackedWithHabitId);
+        if (prereq?.completions[format(new Date(), 'yyyy-MM-dd')]) {
+          return -1;
+        }
+      }
+      if (b.stackedWithHabitId) {
+        const prereq = habits.find(h => h.id === b.stackedWithHabitId);
+        if (prereq?.completions[format(new Date(), 'yyyy-MM-dd')]) {
+          return 1;
+        }
+      }
+      
       if (aCompleted === bCompleted) return 0;
       return aCompleted ? 1 : -1;
     });
@@ -83,13 +160,14 @@ export default function Home() {
   const weeklyGoal = habits.length * 7;
   const weeklyCompletions = progressData.reduce((sum, day) => sum + day.completions, 0);
 
-
   const handleAddHabit = (newHabit: Omit<Habit, 'id' | 'streak' | 'completions'>) => {
     const habitToAdd: Habit = {
       ...newHabit,
       id: uuidv4(),
       streak: 0,
       completions: {},
+      currentDifficulty: 'medium',
+      baseDifficulty: 'medium',
     };
     setHabits(prev => [...prev, habitToAdd]);
     setAddDialogOpen(false);
@@ -108,7 +186,24 @@ export default function Home() {
         if (h.id === habitId) {
           const newCompletions = { ...h.completions, [today]: !h.completions[today] };
           const newStreak = calculateStreakFromCompletions(newCompletions);
-          updatedHabit = { ...h, completions: newCompletions, streak: newStreak };
+          
+          // Level up difficulty after 7 day streak
+          let newDifficulty = h.currentDifficulty;
+          if (newStreak >= 7 && h.currentDifficulty === 'tiny') {
+            newDifficulty = 'easy';
+          } else if (newStreak >= 14 && h.currentDifficulty === 'easy') {
+            newDifficulty = 'medium';
+          } else if (newStreak >= 21 && h.currentDifficulty === 'medium') {
+            newDifficulty = 'hard';
+          }
+          
+          updatedHabit = { 
+            ...h, 
+            completions: newCompletions, 
+            streak: newStreak,
+            currentDifficulty: newDifficulty,
+            missedCount: 0,
+          };
           return updatedHabit;
         }
         return h;
@@ -116,49 +211,189 @@ export default function Home() {
     );
 
     if (updatedHabit && updatedHabit.completions[today]) {
-      setIsLoadingMotivation(true);
-      setMotivation({ title: `Great job on ${updatedHabit.name}!`, message: null });
-      
-      const result = await getMotivationMessageAction(updatedHabit.name, updatedHabit.streak);
-      
-      if (result.success) {
-        setMotivation({ title: `Great job on ${updatedHabit.name}!`, message: result.message });
+      // Show reflection dialog if identity is set and habit is linked
+      if (userIdentity && userIdentity.associatedHabits.includes(habitId)) {
+        setReflectionDialogHabit(updatedHabit);
       } else {
-        setMotivation({ title: 'Oops!', message: result.message });
+        // Show regular motivation
+        setIsLoadingMotivation(true);
+        setMotivation({ title: `Great job on ${updatedHabit.name}!`, message: null });
+        
+        const result = await getMotivationMessageAction(updatedHabit.name, updatedHabit.streak);
+        
+        if (result.success) {
+          setMotivation({ title: `Great job on ${updatedHabit.name}!`, message: result.message });
+        } else {
+          setMotivation({ title: 'Oops!', message: result.message });
+        }
+        setIsLoadingMotivation(false);
       }
-      setIsLoadingMotivation(false);
     }
   };
 
+  const handleUpdateTriggers = (habitId: string, triggers: HabitTrigger[]) => {
+    setHabits(prevHabits =>
+      prevHabits.map(h =>
+        h.id === habitId ? { ...h, triggers } : h
+      )
+    );
+    
+    // Handle habit stacking
+    const stackedTrigger = triggers.find(t => t.type === 'after-habit');
+    if (stackedTrigger) {
+      setHabits(prevHabits =>
+        prevHabits.map(h =>
+          h.id === habitId ? { ...h, stackedWithHabitId: stackedTrigger.value } : h
+        )
+      );
+    }
+    
+    toast({
+      title: "Triggers Updated!",
+      description: "Your implementation intentions have been saved.",
+    });
+  };
+
+  const handleSaveIdentity = (identity: UserIdentity) => {
+    setUserIdentity(identity);
+    toast({
+      title: "Identity Defined!",
+      description: `You're on your way to becoming a ${identity.statement}.`,
+    });
+  };
+
+  const handleSaveReflection = (reflection: Reflection, evidenceEntry?: EvidenceEntry) => {
+    if (evidenceEntry && userIdentity) {
+      const newEvidence = [...userIdentity.evidenceEntries, evidenceEntry];
+      const newScore = Math.min(100, newEvidence.length * 2); // Simple scoring
+      
+      setUserIdentity({
+        ...userIdentity,
+        evidenceEntries: newEvidence,
+        currentScore: newScore,
+      });
+    }
+    
+    toast({
+      title: "Reflection Saved!",
+      description: "Your progress has been recorded.",
+    });
+    
+    setReflectionDialogHabit(null);
+  };
+
+  const handleSaveEnvironmentalDesign = (design: EnvironmentalDesign) => {
+    setEnvironmentalDesigns(prev => ({
+      ...prev,
+      [design.habitId]: design,
+    }));
+    
+    toast({
+      title: "Environment Designed!",
+      description: "Your environment is now optimized for success.",
+    });
+  };
 
   return (
     <>
       <div className="flex flex-col min-h-screen">
         <Header onAddHabit={() => setAddDialogOpen(true)} />
         <main className="flex-1 p-4 sm:p-6 md:p-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto space-y-8">
+            {/* Identity Section */}
+            {!userIdentity && (
+              <div className="text-center py-8">
+                <h2 className="text-2xl font-bold mb-4">Start with Identity</h2>
+                <p className="text-muted-foreground mb-6">
+                  Your habits shape who you become. Define your ideal identity first.
+                </p>
+                <Button onClick={() => setIdentityDialogOpen(true)} size="lg">
+                  <Target className="mr-2 h-5 w-5" />
+                  Define Your Identity
+                </Button>
+              </div>
+            )}
+            
+            {userIdentity && (
+              <IdentityDashboard 
+                identity={userIdentity} 
+                onEditIdentity={() => setIdentityDialogOpen(true)}
+              />
+            )}
+            
+            {/* Progress Dashboard */}
             <ProgressDashboard
               progressData={progressData}
               weeklyGoal={weeklyGoal}
               weeklyCompletions={weeklyCompletions}
             />
-            <h1 className="text-3xl font-bold font-headline mb-6 mt-8">Your Habits</h1>
-            <HabitGrid habits={sortedHabits} onToggleCompletion={handleToggleCompletion} />
+            
+            {/* Habits */}
+            <div>
+              <h1 className="text-3xl font-bold font-headline mb-6">Your Habits</h1>
+              <HabitGrid 
+                habits={sortedHabits} 
+                onToggleCompletion={handleToggleCompletion}
+                onOpenTriggers={(habit) => setTriggerDialogHabit(habit)}
+                onOpenEnvironment={(habit) => setEnvironmentWizardHabit(habit)}
+              />
+            </div>
           </div>
         </main>
       </div>
+      
+      {/* Dialogs */}
       <AddHabitDialog
         isOpen={isAddDialogOpen}
         onOpenChange={setAddDialogOpen}
         onAddHabit={handleAddHabit}
       />
-       <MotivationModal
+      
+      <MotivationModal
         isOpen={!!motivation}
         onOpenChange={() => setMotivation(null)}
         title={motivation?.title || ''}
         message={motivation?.message || ''}
         isLoading={isLoadingMotivation}
       />
+      
+      {triggerDialogHabit && (
+        <TriggerDialog
+          isOpen={!!triggerDialogHabit}
+          onOpenChange={(open) => !open && setTriggerDialogHabit(null)}
+          habit={triggerDialogHabit}
+          habits={habits}
+          onUpdateTriggers={handleUpdateTriggers}
+        />
+      )}
+      
+      <IdentityDialog
+        isOpen={identityDialogOpen}
+        onOpenChange={setIdentityDialogOpen}
+        habits={habits}
+        identity={userIdentity}
+        onSaveIdentity={handleSaveIdentity}
+      />
+      
+      {reflectionDialogHabit && (
+        <ReflectionDialog
+          isOpen={!!reflectionDialogHabit}
+          onOpenChange={(open) => !open && setReflectionDialogHabit(null)}
+          habit={reflectionDialogHabit}
+          identity={userIdentity}
+          onSaveReflection={handleSaveReflection}
+        />
+      )}
+      
+      {environmentWizardHabit && (
+        <EnvironmentWizard
+          isOpen={!!environmentWizardHabit}
+          onOpenChange={(open) => !open && setEnvironmentWizardHabit(null)}
+          habit={environmentWizardHabit}
+          environmentalDesign={environmentalDesigns[environmentWizardHabit.id]}
+          onSaveDesign={handleSaveEnvironmentalDesign}
+        />
+      )}
     </>
   );
 }
