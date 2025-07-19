@@ -8,3 +8,9 @@ export interface Habit {
   streak: number;
   completions: Record<string, boolean>; // date string 'yyyy-MM-dd' -> boolean
 }
+
+export interface ProgressData {
+  date: string;
+  day: string;
+  completions: number;
+}

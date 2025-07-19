@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useMemo } from 'react';
-import { format, subDays } from 'date-fns';
+import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
-import type { Habit } from '@/types';
+import type { Habit, ProgressData } from '@/types';
 import Header from '@/components/layout/header';
 import HabitGrid from '@/components/habits/habit-grid';
 import AddHabitDialog from '@/components/habits/add-habit-dialog';
 import MotivationModal from '@/components/habits/motivation-modal';
+import ProgressDashboard from '@/components/progress/progress-dashboard';
 import { getMotivationMessageAction } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast"
 
@@ -64,6 +65,25 @@ export default function Home() {
     });
   }, [habits]);
 
+  const progressData: ProgressData[] = useMemo(() => {
+    const today = new Date();
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+    const daysInWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+    return daysInWeek.map(day => ({
+      date: format(day, 'MMM d'),
+      day: format(day, 'EEE'),
+      completions: habits.reduce((count, habit) => {
+        return habit.completions[format(day, 'yyyy-MM-dd')] ? count + 1 : count;
+      }, 0)
+    }));
+  }, [habits]);
+
+  const weeklyGoal = habits.length * 7;
+  const weeklyCompletions = progressData.reduce((sum, day) => sum + day.completions, 0);
+
+
   const handleAddHabit = (newHabit: Omit<Habit, 'id' | 'streak' | 'completions'>) => {
     const habitToAdd: Habit = {
       ...newHabit,
@@ -117,7 +137,12 @@ export default function Home() {
         <Header onAddHabit={() => setAddDialogOpen(true)} />
         <main className="flex-1 p-4 sm:p-6 md:p-8">
           <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold font-headline mb-6">Your Habits</h1>
+            <ProgressDashboard
+              progressData={progressData}
+              weeklyGoal={weeklyGoal}
+              weeklyCompletions={weeklyCompletions}
+            />
+            <h1 className="text-3xl font-bold font-headline mb-6 mt-8">Your Habits</h1>
             <HabitGrid habits={sortedHabits} onToggleCompletion={handleToggleCompletion} />
           </div>
         </main>
