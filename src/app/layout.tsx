@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Habitual',
+  title: 'Habituality',
   description: 'Build and track your habits to achieve your goals.',
 };
 
