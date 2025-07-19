@@ -6,9 +6,16 @@ import HabitCard from "./habit-card"
 interface HabitGridProps {
   habits: Habit[];
   onToggleCompletion: (habitId: string) => void;
+  onOpenTriggers: (habit: Habit) => void;
+  onOpenEnvironment: (habit: Habit) => void;
 }
 
-export default function HabitGrid({ habits, onToggleCompletion }: HabitGridProps) {
+export default function HabitGrid({ 
+  habits, 
+  onToggleCompletion,
+  onOpenTriggers,
+  onOpenEnvironment 
+}: HabitGridProps) {
   if (habits.length === 0) {
     return (
       <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
@@ -20,9 +27,22 @@ export default function HabitGrid({ habits, onToggleCompletion }: HabitGridProps
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {habits.map(habit => (
-        <HabitCard key={habit.id} habit={habit} onToggleCompletion={onToggleCompletion} />
-      ))}
+      {habits.map(habit => {
+        const stackedFromHabit = habit.stackedWithHabitId 
+          ? habits.find(h => h.id === habit.stackedWithHabitId) 
+          : null;
+          
+        return (
+          <HabitCard 
+            key={habit.id} 
+            habit={habit} 
+            onToggleCompletion={onToggleCompletion}
+            onOpenTriggers={onOpenTriggers}
+            onOpenEnvironment={onOpenEnvironment}
+            stackedFromHabit={stackedFromHabit}
+          />
+        );
+      })}
     </div>
   )
 }
