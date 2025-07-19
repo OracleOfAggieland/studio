@@ -18,26 +18,9 @@ import { getMotivationMessageAction } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast"
 import { Button } from '@/components/ui/button';
 import { Target } from 'lucide-react';
+import { fetchHabits, saveHabit, updateHabit, resetHabitStreak } from '@/lib/habits';
 
-const initialHabits: Habit[] = [
-  // The 7 Habits of Highly Effective People
-  { id: '1', name: 'Put First Things First', description: 'Prioritize and execute important tasks.', icon: 'ClipboardList', streak: 2, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true }, currentDifficulty: 'medium' },
-  { id: '2', name: 'Sharpen the Saw', description: 'Engage in self-renewal (physical, mental, emotional, spiritual).', icon: 'Sparkles', streak: 4, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true }, currentDifficulty: 'easy' },
-  { id: '3', name: 'Seek First to Understand', description: 'Practice empathetic listening before making yourself heard.', icon: 'Ear', streak: 0, completions: {}, currentDifficulty: 'medium' },
-
-  // Atomic Habits
-  { id: '4', name: 'Identity: A Small Win', description: 'Prove "who I want to become" with one small action.', icon: 'Award', streak: 7, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 5), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 6), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 7), 'yyyy-MM-dd')]: true }, currentDifficulty: 'tiny' },
-  { id: '5', name: 'Make It Easy', description: 'Shrink a habit down to its tiniest, 2-minute version.', icon: 'Scaling', streak: 1, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true }, currentDifficulty: 'tiny' },
-
-  // How to Win Friends & Influence People
-  { id: '6', name: 'Use a Person\'s Name', description: 'Remember and use people\'s names in conversation.', icon: 'User', streak: 3, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true }, currentDifficulty: 'easy', triggers: [{ id: 'tr1', type: 'environmental', value: 'meeting someone new', habitId: '6', successRate: 75, totalAttempts: 12, successfulAttempts: 9 }] },
-  { id: '7', name: 'Sincere Appreciation', description: 'Give honest praise to someone today.', icon: 'Heart', streak: 0, completions: {}, currentDifficulty: 'easy', triggers: [{ id: 'tr2', type: 'time', value: '09:00', habitId: '7', successRate: 60, totalAttempts: 10, successfulAttempts: 6 }] },
-  { id: '8', name: 'Admit Faults Quickly', description: 'If you\'re wrong, admit it quickly and emphatically.', icon: 'CheckCircle', streak: 1, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true }, currentDifficulty: 'medium' },
-
-  // Never Split the Difference
-  { id: '9', name: 'Practice Mirroring', description: 'Repeat the last few words someone has said to build rapport.', icon: 'Copy', streak: 5, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 5), 'yyyy-MM-dd')]: true }, currentDifficulty: 'easy', stackedWithHabitId: '6' },
-  { id: '10', name: 'Practice Labeling', description: 'Acknowledge emotions ("It seems like...") to defuse negativity.', icon: 'Tag', streak: 0, completions: {}, currentDifficulty: 'medium' },
-];
+const initialHabits: Habit[] = [];
 
 function calculateStreakFromCompletions(completions: Record<string, boolean>) {
   let streak = 0;
@@ -67,6 +50,10 @@ export default function Home() {
   const [userIdentity, setUserIdentity] = useState<UserIdentity | null>(null);
   const [environmentalDesigns, setEnvironmentalDesigns] = useState<Record<string, EnvironmentalDesign>>({});
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchHabits().then(setHabits).catch(() => setHabits([]));
+  }, []);
 
   // Check for missed habits and update difficulty
   useEffect(() => {
@@ -170,6 +157,7 @@ export default function Home() {
       baseDifficulty: 'medium',
     };
     setHabits(prev => [...prev, habitToAdd]);
+    saveHabit(habitToAdd);
     setAddDialogOpen(false);
     toast({
       title: "Habit Added!",
@@ -210,6 +198,10 @@ export default function Home() {
       })
     );
 
+    if (updatedHabit) {
+      updateHabit(updatedHabit);
+    }
+
     if (updatedHabit && updatedHabit.completions[today]) {
       // Show reflection dialog if identity is set and habit is linked
       if (userIdentity && userIdentity.associatedHabits.includes(habitId)) {
@@ -231,13 +223,27 @@ export default function Home() {
     }
   };
 
-  const handleUpdateTriggers = (habitId: string, triggers: HabitTrigger[]) => {
-    setHabits(prevHabits =>
-      prevHabits.map(h =>
-        h.id === habitId ? { ...h, triggers } : h
+  const handleResetStreak = (habitId: string) => {
+    setHabits(prev =>
+      prev.map(h =>
+        h.id === habitId ? { ...h, streak: 0, completions: {} } : h
       )
     );
-    
+    resetHabitStreak(habitId);
+    toast({ title: 'Streak Reset', description: 'Your streak has been reset.' });
+  };
+
+  const handleUpdateTriggers = (habitId: string, triggers: HabitTrigger[]) => {
+    let updated: Habit | undefined;
+    setHabits(prevHabits =>
+      prevHabits.map(h => {
+        if (h.id === habitId) {
+          updated = { ...h, triggers };
+          return updated;
+        }
+        return h;
+      })
+    );
     // Handle habit stacking
     const stackedTrigger = triggers.find(t => t.type === 'after-habit');
     if (stackedTrigger) {
@@ -247,6 +253,8 @@ export default function Home() {
         )
       );
     }
+
+    if (updated) updateHabit(updated);
     
     toast({
       title: "Triggers Updated!",
@@ -331,11 +339,12 @@ export default function Home() {
             {/* Habits */}
             <div>
               <h1 className="text-3xl font-bold font-headline mb-6">Your Habits</h1>
-              <HabitGrid 
-                habits={sortedHabits} 
+              <HabitGrid
+                habits={sortedHabits}
                 onToggleCompletion={handleToggleCompletion}
                 onOpenTriggers={(habit) => setTriggerDialogHabit(habit)}
                 onOpenEnvironment={(habit) => setEnvironmentWizardHabit(habit)}
+                onResetStreak={handleResetStreak}
               />
             </div>
           </div>
