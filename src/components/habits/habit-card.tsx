@@ -1,7 +1,7 @@
 "use client"
 
 import { format } from "date-fns"
-import { Flame, Clock, MapPin, Link2, Heart, Brain, Settings } from "lucide-react"
+import { Flame, Clock, MapPin, Link2, Heart, Brain, Settings, RotateCcw } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,15 +14,17 @@ interface HabitCardProps {
   onToggleCompletion: (habitId: string) => void;
   onOpenTriggers: (habit: Habit) => void;
   onOpenEnvironment: (habit: Habit) => void;
+  onResetStreak: (habitId: string) => void;
   stackedFromHabit?: Habit | null;
 }
 
-export default function HabitCard({ 
-  habit, 
-  onToggleCompletion, 
+export default function HabitCard({
+  habit,
+  onToggleCompletion,
   onOpenTriggers,
   onOpenEnvironment,
-  stackedFromHabit 
+  onResetStreak,
+  stackedFromHabit
 }: HabitCardProps) {
   const today = format(new Date(), 'yyyy-MM-dd');
   const isCompletedToday = habit.completions[today] || false;
@@ -93,6 +95,15 @@ export default function HabitCard({
               title="Environmental design"
             >
               <Settings className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => onResetStreak(habit.id)}
+              title="Reset streak"
+            >
+              <RotateCcw className="h-4 w-4" />
             </Button>
           </div>
         </div>

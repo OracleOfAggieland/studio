@@ -8,13 +8,15 @@ interface HabitGridProps {
   onToggleCompletion: (habitId: string) => void;
   onOpenTriggers: (habit: Habit) => void;
   onOpenEnvironment: (habit: Habit) => void;
+  onResetStreak: (habitId: string) => void;
 }
 
-export default function HabitGrid({ 
-  habits, 
+export default function HabitGrid({
+  habits,
   onToggleCompletion,
   onOpenTriggers,
-  onOpenEnvironment 
+  onOpenEnvironment,
+  onResetStreak
 }: HabitGridProps) {
   if (habits.length === 0) {
     return (
@@ -33,12 +35,13 @@ export default function HabitGrid({
           : null;
           
         return (
-          <HabitCard 
-            key={habit.id} 
-            habit={habit} 
+          <HabitCard
+            key={habit.id}
+            habit={habit}
             onToggleCompletion={onToggleCompletion}
             onOpenTriggers={onOpenTriggers}
             onOpenEnvironment={onOpenEnvironment}
+            onResetStreak={onResetStreak}
             stackedFromHabit={stackedFromHabit}
           />
         );
