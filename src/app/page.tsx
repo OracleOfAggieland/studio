@@ -13,23 +13,23 @@ import { getMotivationMessageAction } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast"
 
 const initialHabits: Habit[] = [
-  // 7 Habits of Highly Effective People
-  { id: '1', name: 'Be Proactive', description: 'Focus on your circle of influence.', icon: 'Target', streak: 4, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true } },
-  { id: '2', name: 'Begin with the End in Mind', description: 'Review your personal mission statement.', icon: 'Milestone', streak: 2, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true } },
-  { id: '3', name: 'Put First Things First', description: 'Plan your day using the priority matrix.', icon: 'ClipboardList', streak: 0, completions: {} },
-  { id: '4', name: 'Sharpen the Saw', description: 'Engage in self-renewal (mental, physical, spiritual).', icon: 'Sparkles', streak: 1, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true } },
-  
-  // How to Win Friends and Influence People
-  { id: '5', name: 'Use a Person\'s Name', description: 'Address someone by their name in conversation.', icon: 'User', streak: 5, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 5), 'yyyy-MM-dd')]: true } },
-  { id: '6', name: 'Listen Actively', description: 'Encourage others to talk about themselves.', icon: 'Ear', streak: 3, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true } },
+  // The 7 Habits of Highly Effective People
+  { id: '1', name: 'Put First Things First', description: 'Prioritize and execute important tasks.', icon: 'ClipboardList', streak: 2, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true } },
+  { id: '2', name: 'Sharpen the Saw', description: 'Engage in self-renewal (physical, mental, emotional, spiritual).', icon: 'Sparkles', streak: 4, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true } },
+  { id: '3', name: 'Seek First to Understand', description: 'Practice empathetic listening before making yourself heard.', icon: 'Ear', streak: 0, completions: {} },
 
   // Atomic Habits
-  { id: '7', name: 'Improve 1% Every Day', description: 'Make one small improvement to a skill or process.', icon: 'TrendingUp', streak: 10, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 5), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 6), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 7), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 8), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 9), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 10), 'yyyy-MM-dd')]: true} },
-  { id: '8', name: 'Habit Stacking', description: 'Pair a new habit with an existing one.', icon: 'Layers', streak: 0, completions: {} },
+  { id: '4', name: 'Identity: A Small Win', description: 'Prove "who I want to become" with one small action.', icon: 'Award', streak: 7, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 5), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 6), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 7), 'yyyy-MM-dd')]: true } },
+  { id: '5', name: 'Make It Easy', description: 'Shrink a habit down to its tiniest, 2-minute version.', icon: 'Scaling', streak: 1, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true } },
+
+  // How to Win Friends & Influence People
+  { id: '6', name: 'Use a Person\'s Name', description: 'Remember and use people\'s names in conversation.', icon: 'User', streak: 3, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true } },
+  { id: '7', name: 'Sincere Appreciation', description: 'Give honest praise to someone today.', icon: 'Heart', streak: 0, completions: {} },
+  { id: '8', name: 'Admit Faults Quickly', description: 'If you\'re wrong, admit it quickly and emphatically.', icon: 'CheckCircle', streak: 1, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true } },
 
   // Never Split the Difference
-  { id: '9', name: 'Practice Tactical Empathy', description: 'Acknowledge the other person\'s feelings.', icon: 'Handshake', streak: 1, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true } },
-  { id: '10', name: 'Use Mirroring', description: 'Repeat the last few words someone has said.', icon: 'Copy', streak: 0, completions: {} },
+  { id: '9', name: 'Practice Mirroring', description: 'Repeat the last few words someone has said to build rapport.', icon: 'Copy', streak: 5, completions: { [format(subDays(new Date(), 1), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 2), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 3), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 4), 'yyyy-MM-dd')]: true, [format(subDays(new Date(), 5), 'yyyy-MM-dd')]: true } },
+  { id: '10', name: 'Practice Labeling', description: 'Acknowledge emotions ("It seems like...") to defuse negativity.', icon: 'Tag', streak: 0, completions: {} },
 ];
 
 function calculateStreakFromCompletions(completions: Record<string, boolean>) {
