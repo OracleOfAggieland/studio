@@ -16,3 +16,13 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 ```
 
 Run the development server with `npm run dev`.
+
+To enable AI-generated motivation messages, include your Google AI (Gemini)
+API key as well:
+
+```
+GEMINI_API_KEY=your-gemini-api-key
+```
+
+The application also accepts `GOOGLE_API_KEY`, `NEXT_PUBLIC_GEMINI_API_KEY`, or
+`NEXT_PUBLIC_GOOGLE_API_KEY` for convenience.
