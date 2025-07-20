@@ -9,7 +9,8 @@ const googleApiKey =
   process.env.GOOGLE_API_KEY ||
   process.env.GEMINI_API_KEY ||
   process.env.NEXT_PUBLIC_GOOGLE_API_KEY ||
-  process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+  process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+  'AIzaSyB-RIjhhODp6aPTzqVcwbXD894oebXFCUY';
 
 export const ai = genkit({
   plugins: [googleAI({ apiKey: googleApiKey })],
